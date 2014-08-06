@@ -14,7 +14,7 @@ path = "tests/test.rs"
 
 [dependencies.rust-postgres]
 git = "https://github.com/sfackler/rust-postgres"
-rev = "7d8424418c52e148cba4bcfd89eeb9b5abdf7573"
+rev = "a6f84656148994fc70707dc5835c69ad9bb8d6dd"
 
 [dependencies.r2d2]
 git = "https://github.com/sfackler/r2d2"
