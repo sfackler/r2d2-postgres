@@ -1,0 +1,21 @@
+[package]
+name = "r2d2_postgres"
+version = "0.0.0"
+authors = ["Steven Fackler <sfackler@gmail.com>"]
+
+[[lib]]
+name = "r2d2_postgres"
+path = "src/lib.rs"
+test = false
+
+[[test]]
+name = "test"
+path = "tests/test.rs"
+
+[dependencies.rust-postgres]
+git = "https://github.com/sfackler/rust-postgres"
+rev = "7d8424418c52e148cba4bcfd89eeb9b5abdf7573"
+
+[dependencies.r2d2]
+git = "https://github.com/sfackler/r2d2"
+rev = "150f55e4f5cc73a554be72e18c5ed61184673043"
