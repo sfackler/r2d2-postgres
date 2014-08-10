@@ -18,4 +18,4 @@ rev = "a6f84656148994fc70707dc5835c69ad9bb8d6dd"
 
 [dependencies.r2d2]
 git = "https://github.com/sfackler/r2d2"
-rev = "150f55e4f5cc73a554be72e18c5ed61184673043"
+rev = "4a087cf21097459a5107bf7152424e09483314be"

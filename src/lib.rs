@@ -23,4 +23,8 @@ impl r2d2::PoolManager<PostgresConnection, PostgresConnectError> for PostgresPoo
     fn connect(&self) -> Result<PostgresConnection, PostgresConnectError> {
         PostgresConnection::connect(self.params.clone(), &self.ssl_mode)
     }
+
+    fn is_valid(&self, conn: &PostgresConnection) -> bool {
+        conn.execute("SELECT 1", []).is_ok()
+    }
 }
