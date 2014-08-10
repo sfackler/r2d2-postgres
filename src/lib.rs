@@ -25,6 +25,6 @@ impl r2d2::PoolManager<PostgresConnection, PostgresConnectError> for PostgresPoo
     }
 
     fn is_valid(&self, conn: &PostgresConnection) -> bool {
-        conn.execute("SELECT 1", []).is_ok()
+        conn.batch_execute("SELECT 1").is_ok()
     }
 }
