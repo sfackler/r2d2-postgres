@@ -5,23 +5,26 @@ use postgres::{PostgresConnection, PostgresConnectParams, IntoConnectParams, Ssl
 use postgres::error::PostgresConnectError;
 
 pub struct PostgresPoolManager {
-    params: PostgresConnectParams,
+    params: Result<PostgresConnectParams, PostgresConnectError>,
     ssl_mode: SslMode,
 }
 
 impl PostgresPoolManager {
     pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
-                                     -> Result<PostgresPoolManager, PostgresConnectError> {
-        Ok(PostgresPoolManager {
-            params: try!(params.into_connect_params()),
+                                     -> PostgresPoolManager {
+        PostgresPoolManager {
+            params: params.into_connect_params(),
             ssl_mode: ssl_mode,
-        })
+        }
     }
 }
 
 impl r2d2::PoolManager<PostgresConnection, PostgresConnectError> for PostgresPoolManager {
     fn connect(&self) -> Result<PostgresConnection, PostgresConnectError> {
-        PostgresConnection::connect(self.params.clone(), &self.ssl_mode)
+        match self.params {
+            Ok(ref p) => PostgresConnection::connect(p.clone(), &self.ssl_mode),
+            Err(ref e) => Err(e.clone())
+        }
     }
 
     fn is_valid(&self, conn: &PostgresConnection) -> bool {

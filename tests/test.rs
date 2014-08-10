@@ -7,12 +7,23 @@ use std::sync::{Arc, Future};
 use std::comm;
 
 use postgres::NoSsl;
-use postgres::error::SocketError;
+use postgres::error::{SocketError, InvalidUrl};
 use r2d2_postgres::PostgresPoolManager;
 
 #[test]
-fn test_bad_url_error() {
-    let manager = PostgresPoolManager::new("postgres://bogushost", NoSsl).unwrap();
+fn test_bad_url_deferred() {
+    let manager = PostgresPoolManager::new("not a url", NoSsl);
+    let config = Default::default();
+    match r2d2::Pool::new(config, manager) {
+        Err(r2d2::ConnectionError(InvalidUrl(_))) => {}
+        Err(err) => fail!("Unexpected error {}", err),
+        _ => fail!("Unexpected success"),
+    }
+}
+
+#[test]
+fn test_bad_host_error() {
+    let manager = PostgresPoolManager::new("postgres://bogushost", NoSsl);
     let config = Default::default();
     match r2d2::Pool::new(config, manager) {
         Err(r2d2::ConnectionError(SocketError(_))) => {}
@@ -23,7 +34,7 @@ fn test_bad_url_error() {
 
 #[test]
 fn test_basic() {
-    let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl).unwrap();
+    let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl);
     let config = r2d2::Config {
         initial_size: 2,
         ..Default::default()
