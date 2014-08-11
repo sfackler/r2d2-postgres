@@ -12,9 +12,9 @@ test = false
 name = "test"
 path = "tests/test.rs"
 
-[dependencies.rust-postgres]
+[dependencies.postgres]
 git = "https://github.com/sfackler/rust-postgres"
-rev = "ab59eac6fc076f35f7a2a542e5a10cc94211a9b6"
+rev = "e85d33206b232753b8601d964c7ab48cbb8baac2"
 
 [dependencies.r2d2]
 git = "https://github.com/sfackler/r2d2"
