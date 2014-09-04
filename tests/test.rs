@@ -52,7 +52,7 @@ fn test_basic() {
         let conn = pool1.get().unwrap();
         s1.send(());
         r2.recv();
-        conn.replace();
+        drop(conn);
     });
 
     let pool2 = pool.clone();
@@ -60,11 +60,11 @@ fn test_basic() {
         let conn = pool2.get().unwrap();
         s2.send(());
         r1.recv();
-        conn.replace();
+        drop(conn);
     });
 
     fut1.get();
     fut2.get();
 
-    pool.get().unwrap().replace();
+    pool.get().unwrap();
 }
