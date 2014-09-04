@@ -7,14 +7,15 @@ use std::sync::{Arc, Future};
 use std::comm;
 
 use postgres::NoSsl;
-use postgres::error::{SocketError, InvalidUrl};
+use postgres::error::{SocketError, InvalidUrl, PostgresConnectError};
 use r2d2_postgres::PostgresPoolManager;
 
 #[test]
 fn test_bad_url_deferred() {
     let manager = PostgresPoolManager::new("not a url", NoSsl);
     let config = Default::default();
-    match r2d2::Pool::new(config, manager) {
+    let handler = r2d2::NoopErrorHandler::<PostgresConnectError>;
+    match r2d2::Pool::new(config, manager, handler) {
         Err(r2d2::ConnectionError(InvalidUrl(_))) => {}
         Err(err) => fail!("Unexpected error {}", err),
         _ => fail!("Unexpected success"),
@@ -25,7 +26,8 @@ fn test_bad_url_deferred() {
 fn test_bad_host_error() {
     let manager = PostgresPoolManager::new("postgres://bogushost", NoSsl);
     let config = Default::default();
-    match r2d2::Pool::new(config, manager) {
+    let handler = r2d2::NoopErrorHandler::<PostgresConnectError>;
+    match r2d2::Pool::new(config, manager, handler) {
         Err(r2d2::ConnectionError(SocketError(_))) => {}
         Err(err) => fail!("Unexpected error {}", err),
         _ => fail!("Unexpected success")
@@ -36,10 +38,11 @@ fn test_bad_host_error() {
 fn test_basic() {
     let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl);
     let config = r2d2::Config {
-        initial_size: 2,
+        pool_size: 2,
         ..Default::default()
     };
-    let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
+    let handler = r2d2::NoopErrorHandler::<PostgresConnectError>;
+    let pool = Arc::new(r2d2::Pool::new(config, manager, handler).unwrap());
 
     let (s1, r1) = comm::channel();
     let (s2, r2) = comm::channel();

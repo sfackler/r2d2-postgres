@@ -3,7 +3,7 @@ name = "r2d2_postgres"
 version = "0.0.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 
-[[lib]]
+[lib]
 name = "r2d2_postgres"
 path = "src/lib.rs"
 test = false
@@ -14,8 +14,7 @@ path = "tests/test.rs"
 
 [dependencies.postgres]
 git = "https://github.com/sfackler/rust-postgres"
-rev = "e85d33206b232753b8601d964c7ab48cbb8baac2"
 
 [dependencies.r2d2]
 git = "https://github.com/sfackler/r2d2"
-rev = "4a087cf21097459a5107bf7152424e09483314be"
+rev = "28c28642e643bbf8275ee4ef641eef2b8f53a88f"
