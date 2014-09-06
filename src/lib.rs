@@ -10,8 +10,7 @@ pub struct PostgresPoolManager {
 }
 
 impl PostgresPoolManager {
-    pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
-                                     -> PostgresPoolManager {
+    pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode) -> PostgresPoolManager {
         PostgresPoolManager {
             params: params.into_connect_params(),
             ssl_mode: ssl_mode,
