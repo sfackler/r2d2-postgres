@@ -1,6 +1,5 @@
+language: rust
 addons:
   postgresql: 9.3
-install:
-  - curl http://www.rust-lang.org/rustup.sh | sudo sh -
 script:
   - cargo test
