@@ -68,3 +68,17 @@ fn test_basic() {
 
     pool.get().unwrap();
 }
+
+#[test]
+fn test_is_valid() {
+    let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl);
+    let config = r2d2::Config {
+        pool_size: 1,
+        test_on_check_out: true,
+        ..Default::default()
+    };
+    let handler = r2d2::NoopErrorHandler;
+    let pool = r2d2::Pool::new(config, manager, handler).unwrap();
+
+    pool.get().unwrap();
+}

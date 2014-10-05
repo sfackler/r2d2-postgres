@@ -44,7 +44,7 @@ impl r2d2::PoolManager<PostgresConnection, Error> for PostgresPoolManager {
     }
 
     fn is_valid(&self, conn: &mut PostgresConnection) -> Result<(), Error> {
-        conn.batch_execute("SELECT 1").map_err(OtherError)
+        conn.batch_execute("").map_err(OtherError)
     }
 
     fn has_broken(&self, conn: &mut PostgresConnection) -> bool {
