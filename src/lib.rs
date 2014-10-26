@@ -1,3 +1,4 @@
+#![doc(html_root_url="https://sfackler.github.io/doc")]
 extern crate r2d2;
 extern crate postgres;
 
