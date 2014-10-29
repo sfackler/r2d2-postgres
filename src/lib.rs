@@ -96,9 +96,11 @@ impl StatementPoolingManager {
 
 impl r2d2::PoolManager<Connection, Error> for StatementPoolingManager {
     fn connect(&self) -> Result<Connection, Error> {
+        let cache = box RefCell::new(LruCache::<String, PostgresStatement<'static>>::new(
+                self.config.statement_pool_size));
         Ok(Connection {
             conn: box try!(self.manager.connect()),
-            stmts: RefCell::new(LruCache::new(self.config.statement_pool_size))
+            stmts: unsafe { mem::transmute(cache) },
         })
     }
 
@@ -133,21 +135,26 @@ pub trait GenericConnection {
 
 pub struct Connection {
     conn: Box<PostgresConnection>,
-    stmts: RefCell<LruCache<String, Rc<PostgresStatement<'static>>>>,
+    stmts: *mut (),
 }
 
-#[unsafe_destructor]
 impl Drop for Connection {
-    // Just make sure that all the statements drop before the connection
     fn drop(&mut self) {
-        self.stmts.borrow_mut().change_capacity(0);
+        let _: Box<RefCell<LruCache<String, Rc<PostgresStatement<'static>>>>> =
+            unsafe { mem::transmute(self.stmts) };
+    }
+}
+
+impl Connection {
+    fn get_cache(&self) -> &RefCell<LruCache<String, Rc<PostgresStatement<'static>>>> {
+        unsafe { mem::transmute(self.stmts) }
     }
 }
 
 impl GenericConnection for Connection {
     fn prepare<'a>(&'a self, query: &str) -> PostgresResult<Rc<PostgresStatement<'a>>> {
         let query = query.into_string();
-        let mut stmts = self.stmts.borrow_mut();
+        let mut stmts = self.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
             return Ok(unsafe { mem::transmute(stmt.clone()) });
@@ -183,7 +190,7 @@ pub struct Transaction<'a> {
 impl<'a> GenericConnection for Transaction<'a> {
     fn prepare<'a>(&'a self, query: &str) -> PostgresResult<Rc<PostgresStatement<'a>>> {
         let query = query.into_string();
-        let mut stmts = self.conn.stmts.borrow_mut();
+        let mut stmts = self.conn.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
             return Ok(unsafe { mem::transmute(stmt.clone()) });

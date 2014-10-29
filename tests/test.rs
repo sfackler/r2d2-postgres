@@ -59,16 +59,24 @@ fn test_is_valid() {
     pool.get().unwrap();
 }
 
-/*
 #[test]
 fn test_statement_pool() {
+    let config = r2d2_postgres::Config { statement_pool_size: 1 };
     let manager = r2d2_postgres::StatementPoolingManager::new(
-        "postgres://postgres@localhost", NoSsl, Default::default());
+        "postgres://postgres@localhost", NoSsl, config);
     let pool = r2d2::Pool::new(Default::default(), manager, r2d2::NoopErrorHandler).unwrap();
 
     let conn = pool.get().unwrap();
     let stmt = conn.prepare("SELECT 1::INT").unwrap();
     let stmt2 = conn.prepare("SELECT 1::INT").unwrap();
-    assert_eq!(*stmt as *mut _, *stmt2 as *mut _);
+    assert_eq!(&*stmt as *const _, &*stmt2 as *const _);
+    assert_eq!(stmt.query([]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
+
+    let stmt3 = conn.prepare("SELECT 2::INT").unwrap();
+    assert_eq!(stmt3.query([]).unwrap().next().unwrap().get::<_, i32>(0), 2i32);
+    let stmt4 = conn.prepare("SELECT 1::INT").unwrap();
+    let a = &*stmt as *const _;
+    let b = &*stmt4 as *const _;
+    assert!(a != b);
+    assert_eq!(stmt4.query([]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
 }
-*/
