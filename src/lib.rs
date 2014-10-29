@@ -1,5 +1,5 @@
 #![doc(html_root_url="https://sfackler.github.io/doc")]
-#![feature(if_let, unsafe_destructor)]
+#![feature(if_let)]
 extern crate r2d2;
 extern crate postgres;
 
