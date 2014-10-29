@@ -8,6 +8,7 @@ use std::comm;
 
 use postgres::NoSsl;
 use r2d2_postgres::PostgresPoolManager;
+use r2d2_postgres::GenericConnection;
 
 #[test]
 fn test_basic() {
@@ -57,3 +58,17 @@ fn test_is_valid() {
 
     pool.get().unwrap();
 }
+
+/*
+#[test]
+fn test_statement_pool() {
+    let manager = r2d2_postgres::StatementPoolingManager::new(
+        "postgres://postgres@localhost", NoSsl, Default::default());
+    let pool = r2d2::Pool::new(Default::default(), manager, r2d2::NoopErrorHandler).unwrap();
+
+    let conn = pool.get().unwrap();
+    let stmt = conn.prepare("SELECT 1::INT").unwrap();
+    let stmt2 = conn.prepare("SELECT 1::INT").unwrap();
+    assert_eq!(*stmt as *mut _, *stmt2 as *mut _);
+}
+*/
