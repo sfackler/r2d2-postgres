@@ -193,7 +193,7 @@ impl<'a> GenericConnection for Transaction<'a> {
         let mut stmts = self.conn.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
-            return Ok(unsafe { mem::transmute(stmt.clone()) });
+            return Ok(stmt.clone());
         }
 
         Ok(Rc::new(try!(self.trans.prepare(query[]))))
