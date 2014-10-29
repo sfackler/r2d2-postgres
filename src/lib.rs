@@ -146,7 +146,7 @@ impl Drop for Connection {
 }
 
 impl Connection {
-    fn get_cache(&self) -> &RefCell<LruCache<String, Rc<PostgresStatement<'static>>>> {
+    fn get_cache<'a>(&'a self) -> &'a RefCell<LruCache<String, Rc<PostgresStatement<'a>>>> {
         unsafe { mem::transmute(self.stmts) }
     }
 }
@@ -157,11 +157,11 @@ impl GenericConnection for Connection {
         let mut stmts = self.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
-            return Ok(unsafe { mem::transmute(stmt.clone()) });
+            return Ok(stmt.clone());
         }
 
         let stmt = Rc::new(try!(self.conn.prepare(query[])));
-        stmts.put(query, unsafe { mem::transmute(stmt.clone()) });
+        stmts.put(query, stmt.clone());
         Ok(stmt)
     }
 
