@@ -79,22 +79,22 @@ impl Default for Config {
     }
 }
 
-pub struct StatementPoolingManager {
+pub struct StatementCachingManager {
     manager: PostgresPoolManager,
     config: Config,
 }
 
-impl StatementPoolingManager {
-    pub fn new<T>(params: T, ssl_mode: SslMode, config: Config) -> StatementPoolingManager
+impl StatementCachingManager {
+    pub fn new<T>(params: T, ssl_mode: SslMode, config: Config) -> StatementCachingManager
             where T: IntoConnectParams {
-        StatementPoolingManager {
+        StatementCachingManager {
             manager: PostgresPoolManager::new(params, ssl_mode),
             config: config
         }
     }
 }
 
-impl r2d2::PoolManager<Connection, Error> for StatementPoolingManager {
+impl r2d2::PoolManager<Connection, Error> for StatementCachingManager {
     fn connect(&self) -> Result<Connection, Error> {
         let cache = box RefCell::new(LruCache::<String, PostgresStatement<'static>>::new(
                 self.config.statement_pool_size));

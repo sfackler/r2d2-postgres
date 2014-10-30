@@ -62,7 +62,7 @@ fn test_is_valid() {
 #[test]
 fn test_statement_pool() {
     let config = r2d2_postgres::Config { statement_pool_size: 1 };
-    let manager = r2d2_postgres::StatementPoolingManager::new(
+    let manager = r2d2_postgres::StatementCachingManager::new(
         "postgres://postgres@localhost", NoSsl, config);
     let pool = r2d2::Pool::new(Default::default(), manager, r2d2::NoopErrorHandler).unwrap();
 
