@@ -9,14 +9,7 @@ use std::default::Default;
 use std::fmt;
 use std::mem;
 use std::rc::Rc;
-use postgres::{PostgresConnection,
-               PostgresConnectParams,
-               IntoConnectParams,
-               SslMode,
-               PostgresResult,
-               PostgresStatement,
-               PostgresCopyInStatement,
-               PostgresTransaction};
+use postgres::{IntoConnectParams, SslMode};
 use postgres::error::{PostgresConnectError, PostgresError};
 use postgres::types::ToSql;
 
@@ -35,7 +28,7 @@ impl fmt::Show for Error {
 }
 
 pub struct PostgresPoolManager {
-    params: Result<PostgresConnectParams, PostgresConnectError>,
+    params: Result<postgres::ConnectParams, PostgresConnectError>,
     ssl_mode: SslMode,
 }
 
@@ -48,21 +41,21 @@ impl PostgresPoolManager {
     }
 }
 
-impl r2d2::PoolManager<PostgresConnection, Error> for PostgresPoolManager {
-    fn connect(&self) -> Result<PostgresConnection, Error> {
+impl r2d2::PoolManager<postgres::Connection, Error> for PostgresPoolManager {
+    fn connect(&self) -> Result<postgres::Connection, Error> {
         match self.params {
             Ok(ref p) => {
-                PostgresConnection::connect(p.clone(), &self.ssl_mode).map_err(ConnectError)
+                postgres::Connection::connect(p.clone(), &self.ssl_mode).map_err(ConnectError)
             }
             Err(ref e) => Err(ConnectError(e.clone()))
         }
     }
 
-    fn is_valid(&self, conn: &mut PostgresConnection) -> Result<(), Error> {
+    fn is_valid(&self, conn: &mut postgres::Connection) -> Result<(), Error> {
         conn.batch_execute("").map_err(OtherError)
     }
 
-    fn has_broken(&self, conn: &mut PostgresConnection) -> bool {
+    fn has_broken(&self, conn: &mut postgres::Connection) -> bool {
         conn.is_desynchronized()
     }
 }
@@ -96,7 +89,7 @@ impl StatementCachingManager {
 
 impl r2d2::PoolManager<Connection, Error> for StatementCachingManager {
     fn connect(&self) -> Result<Connection, Error> {
-        let cache = box RefCell::new(LruCache::<String, PostgresStatement<'static>>::new(
+        let cache = box RefCell::new(LruCache::<String, postgres::Statement<'static>>::new(
                 self.config.statement_pool_size));
         Ok(Connection {
             conn: box try!(self.manager.connect()),
@@ -114,45 +107,45 @@ impl r2d2::PoolManager<Connection, Error> for StatementCachingManager {
 }
 
 pub trait GenericConnection {
-    /// Like `PostgresConnection::prepare`.
-    fn prepare<'a>(&'a self, query: &str) -> PostgresResult<Rc<PostgresStatement<'a>>>;
+    /// Like `postgres::Connection::prepare`.
+    fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>>;
 
-    /// Like `PostgresConnection::execute`.
-    fn execute(&self, query: &str, params: &[&ToSql]) -> PostgresResult<uint> {
+    /// Like `postgres::Connection::execute`.
+    fn execute(&self, query: &str, params: &[&ToSql]) -> postgres::Result<uint> {
         self.prepare(query).and_then(|s| s.execute(params))
     }
 
-    /// Like `PostgresConnection::prepare_copy_in`.
+    /// Like `postgres::Connection::prepare_copy_in`.
     fn prepare_copy_in<'a>(&'a self, table: &str, columns: &[&str])
-                           -> PostgresResult<PostgresCopyInStatement<'a>>;
+                           -> postgres::Result<postgres::CopyInStatement<'a>>;
 
-    /// Like `PostgresConnection::transaction`.
-    fn transaction<'a>(&'a self) -> PostgresResult<Transaction<'a>>;
+    /// Like `postgres::Connection::transaction`.
+    fn transaction<'a>(&'a self) -> postgres::Result<Transaction<'a>>;
 
-    /// Like `PostgresConnection::batch_execute`.
-    fn batch_execute(&self, query: &str) -> PostgresResult<()>;
+    /// Like `postgres::Connection::batch_execute`.
+    fn batch_execute(&self, query: &str) -> postgres::Result<()>;
 }
 
 pub struct Connection {
-    conn: Box<PostgresConnection>,
+    conn: Box<postgres::Connection>,
     stmts: *mut (),
 }
 
 impl Drop for Connection {
     fn drop(&mut self) {
-        let _: Box<RefCell<LruCache<String, Rc<PostgresStatement<'static>>>>> =
+        let _: Box<RefCell<LruCache<String, Rc<postgres::Statement<'static>>>>> =
             unsafe { mem::transmute(self.stmts) };
     }
 }
 
 impl Connection {
-    fn get_cache<'a>(&'a self) -> &'a RefCell<LruCache<String, Rc<PostgresStatement<'a>>>> {
+    fn get_cache<'a>(&'a self) -> &'a RefCell<LruCache<String, Rc<postgres::Statement<'a>>>> {
         unsafe { mem::transmute(self.stmts) }
     }
 }
 
 impl GenericConnection for Connection {
-    fn prepare<'a>(&'a self, query: &str) -> PostgresResult<Rc<PostgresStatement<'a>>> {
+    fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>> {
         let query = query.into_string();
         let mut stmts = self.get_cache().borrow_mut();
 
@@ -166,29 +159,29 @@ impl GenericConnection for Connection {
     }
 
     fn prepare_copy_in<'a>(&'a self, table: &str, columns: &[&str])
-                           -> PostgresResult<PostgresCopyInStatement<'a>> {
+                           -> postgres::Result<postgres::CopyInStatement<'a>> {
         self.conn.prepare_copy_in(table, columns)
     }
 
-    fn transaction<'a>(&'a self) -> PostgresResult<Transaction<'a>> {
+    fn transaction<'a>(&'a self) -> postgres::Result<Transaction<'a>> {
         Ok(Transaction {
             conn: self,
             trans: try!(self.conn.transaction())
         })
     }
 
-    fn batch_execute(&self, query: &str) -> PostgresResult<()> {
+    fn batch_execute(&self, query: &str) -> postgres::Result<()> {
         self.conn.batch_execute(query)
     }
 }
 
 pub struct Transaction<'a> {
     conn: &'a Connection,
-    trans: PostgresTransaction<'a>
+    trans: postgres::Transaction<'a>
 }
 
 impl<'a> GenericConnection for Transaction<'a> {
-    fn prepare<'a>(&'a self, query: &str) -> PostgresResult<Rc<PostgresStatement<'a>>> {
+    fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>> {
         let query = query.into_string();
         let mut stmts = self.conn.get_cache().borrow_mut();
 
@@ -200,18 +193,18 @@ impl<'a> GenericConnection for Transaction<'a> {
     }
 
     fn prepare_copy_in<'a>(&'a self, table: &str, columns: &[&str])
-                           -> PostgresResult<PostgresCopyInStatement<'a>> {
+                           -> postgres::Result<postgres::CopyInStatement<'a>> {
         self.trans.prepare_copy_in(table, columns)
     }
 
-    fn transaction<'a>(&'a self) -> PostgresResult<Transaction<'a>> {
+    fn transaction<'a>(&'a self) -> postgres::Result<Transaction<'a>> {
         Ok(Transaction {
             conn: self.conn,
             trans: try!(self.trans.transaction())
         })
     }
 
-    fn batch_execute(&self, query: &str) -> PostgresResult<()> {
+    fn batch_execute(&self, query: &str) -> postgres::Result<()> {
         self.trans.batch_execute(query)
     }
 }
