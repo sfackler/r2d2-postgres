@@ -10,25 +10,24 @@ use std::fmt;
 use std::mem;
 use std::rc::Rc;
 use postgres::{IntoConnectParams, SslMode};
-use postgres::error::{PostgresConnectError, PostgresError};
 use postgres::types::ToSql;
 
 pub enum Error {
-    ConnectError(PostgresConnectError),
-    OtherError(PostgresError),
+    Connect(postgres::ConnectError),
+    Other(postgres::Error),
 }
 
 impl fmt::Show for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ConnectError(ref e) => write!(fmt, "{}", e),
-            OtherError(ref e) => write!(fmt, "{}", e),
+            Error::Connect(ref e) => write!(fmt, "{}", e),
+            Error::Other(ref e) => write!(fmt, "{}", e),
         }
     }
 }
 
 pub struct PostgresPoolManager {
-    params: Result<postgres::ConnectParams, PostgresConnectError>,
+    params: Result<postgres::ConnectParams, postgres::ConnectError>,
     ssl_mode: SslMode,
 }
 
@@ -45,14 +44,14 @@ impl r2d2::PoolManager<postgres::Connection, Error> for PostgresPoolManager {
     fn connect(&self) -> Result<postgres::Connection, Error> {
         match self.params {
             Ok(ref p) => {
-                postgres::Connection::connect(p.clone(), &self.ssl_mode).map_err(ConnectError)
+                postgres::Connection::connect(p.clone(), &self.ssl_mode).map_err(Error::Connect)
             }
-            Err(ref e) => Err(ConnectError(e.clone()))
+            Err(ref e) => Err(Error::Connect(e.clone()))
         }
     }
 
     fn is_valid(&self, conn: &mut postgres::Connection) -> Result<(), Error> {
-        conn.batch_execute("").map_err(OtherError)
+        conn.batch_execute("").map_err(Error::Other)
     }
 
     fn has_broken(&self, conn: &mut postgres::Connection) -> bool {
