@@ -6,6 +6,7 @@ extern crate postgres;
 use std::cell::RefCell;
 use std::collections::LruCache;
 use std::default::Default;
+use std::error;
 use std::fmt;
 use std::mem;
 use std::rc::Rc;
@@ -22,6 +23,22 @@ impl fmt::Show for Error {
         match *self {
             Error::Connect(ref e) => write!(fmt, "{}", e),
             Error::Other(ref e) => write!(fmt, "{}", e),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::Connect(_) => "Error opening a connection",
+            Error::Other(_) => "Error communicating with server",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Connect(ref err) => Some(err as &error::Error),
+            Error::Other(ref err) => Some(err as &error::Error),
         }
     }
 }
@@ -153,7 +170,7 @@ impl GenericConnection for Connection {
         }
 
         let stmt = Rc::new(try!(self.conn.prepare(query[])));
-        stmts.put(query, stmt.clone());
+        stmts.insert(query, stmt.clone());
         Ok(stmt)
     }
 
