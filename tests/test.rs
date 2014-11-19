@@ -6,13 +6,13 @@ use std::default::Default;
 use std::sync::{Arc, Future};
 use std::comm;
 
-use postgres::NoSsl;
+use postgres::SslMode;
 use r2d2_postgres::PostgresPoolManager;
 use r2d2_postgres::GenericConnection;
 
 #[test]
 fn test_basic() {
-    let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl);
+    let manager = PostgresPoolManager::new("postgres://postgres@localhost", SslMode::None);
     let config = r2d2::Config {
         pool_size: 2,
         ..Default::default()
@@ -47,7 +47,7 @@ fn test_basic() {
 
 #[test]
 fn test_is_valid() {
-    let manager = PostgresPoolManager::new("postgres://postgres@localhost", NoSsl);
+    let manager = PostgresPoolManager::new("postgres://postgres@localhost", SslMode::None);
     let config = r2d2::Config {
         pool_size: 1,
         test_on_check_out: true,
@@ -63,7 +63,7 @@ fn test_is_valid() {
 fn test_statement_pool() {
     let config = r2d2_postgres::Config { statement_pool_size: 1 };
     let manager = r2d2_postgres::StatementCachingManager::new(
-        "postgres://postgres@localhost", NoSsl, config);
+        "postgres://postgres@localhost", SslMode::None, config);
     let pool = r2d2::Pool::new(Default::default(), manager, r2d2::NoopErrorHandler).unwrap();
 
     let conn = pool.get().unwrap();
