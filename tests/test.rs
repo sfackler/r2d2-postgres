@@ -70,13 +70,13 @@ fn test_statement_pool() {
     let stmt = conn.prepare("SELECT 1::INT").unwrap();
     let stmt2 = conn.prepare("SELECT 1::INT").unwrap();
     assert_eq!(&*stmt as *const _, &*stmt2 as *const _);
-    assert_eq!(stmt.query([]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
+    assert_eq!(stmt.query(&[]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
 
     let stmt3 = conn.prepare("SELECT 2::INT").unwrap();
-    assert_eq!(stmt3.query([]).unwrap().next().unwrap().get::<_, i32>(0), 2i32);
+    assert_eq!(stmt3.query(&[]).unwrap().next().unwrap().get::<_, i32>(0), 2i32);
     let stmt4 = conn.prepare("SELECT 1::INT").unwrap();
     let a = &*stmt as *const _;
     let b = &*stmt4 as *const _;
     assert!(a != b);
-    assert_eq!(stmt4.query([]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
+    assert_eq!(stmt4.query(&[]).unwrap().next().unwrap().get::<_, i32>(0), 1i32);
 }
