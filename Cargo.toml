@@ -1,6 +1,6 @@
 [package]
 name = "r2d2_postgres"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 license = "MIT"
 description = "Postgres support for the r2d2 connection pool"
@@ -21,4 +21,4 @@ path = "tests/test.rs"
 git = "https://github.com/sfackler/rust-postgres"
 
 [dependencies]
-r2d2 = "0.0"
+r2d2 = "0.1"
