@@ -21,4 +21,4 @@ path = "tests/test.rs"
 git = "https://github.com/sfackler/rust-postgres"
 
 [dependencies]
-r2d2 = "*"
+r2d2 = "0.0"
