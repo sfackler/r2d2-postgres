@@ -1,5 +1,7 @@
+//! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://sfackler.github.io/doc")]
 #![feature(if_let)]
+#![warn(missing_docs)]
 extern crate r2d2;
 extern crate postgres;
 
@@ -13,8 +15,11 @@ use std::rc::Rc;
 use postgres::{IntoConnectParams, SslMode};
 use postgres::types::ToSql;
 
+/// A unified enum of errors returned by postgres::Connection
 pub enum Error {
+    /// A postgres::ConnectError
     Connect(postgres::ConnectError),
+    /// An postgres::Error
     Other(postgres::Error),
 }
 
@@ -43,12 +48,46 @@ impl error::Error for Error {
     }
 }
 
+/// An `r2d2::PoolManager` for `postgres::Connection`s.
+///
+/// ## Example
+///
+/// ```rust,no_run
+/// extern crate r2d2;
+/// extern crate r2d2_postgres;
+/// extern crate postgres;
+///
+/// use std::sync::Arc;
+/// use std::default::Default;
+/// use postgres::SslMode;
+/// use r2d2_postgres::PostgresPoolManager;
+///
+/// fn main() {
+///     let config = Default::default();
+///     let manager = PostgresPoolManager::new("postgres://postgres@localhost",
+///                                            SslMode::None);
+///     let error_handler = r2d2::LoggingErrorHandler;
+///     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
+///
+///     for i in range(0, 10i32) {
+///         let pool = pool.clone();
+///         spawn(proc() {
+///             let conn = pool.get().unwrap();
+///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
+///         });
+///     }
+/// }
+/// ```
 pub struct PostgresPoolManager {
     params: Result<postgres::ConnectParams, postgres::ConnectError>,
     ssl_mode: SslMode,
 }
 
 impl PostgresPoolManager {
+    /// Creates a new `PostgresPoolManager`.
+    ///
+    /// See `postgres::Connection::connect` for a description of the parameter
+    /// types.
     pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode) -> PostgresPoolManager {
         PostgresPoolManager {
             params: params.into_connect_params(),
@@ -76,7 +115,11 @@ impl r2d2::PoolManager<postgres::Connection, Error> for PostgresPoolManager {
     }
 }
 
+/// Configuration options for the `CachingStatementManager`.
 pub struct Config {
+    /// The number of `postgres::Statement`s that will be internally cached.
+    ///
+    /// Defaults to 10
     pub statement_pool_size: uint,
 }
 
@@ -88,12 +131,17 @@ impl Default for Config {
     }
 }
 
+/// An `r2d2::PoolManager` for `Connection`s, which cache prepared statements.
 pub struct StatementCachingManager {
     manager: PostgresPoolManager,
     config: Config,
 }
 
 impl StatementCachingManager {
+    /// Creates a new `StatementCachingManager`.
+    ///
+    /// See `postgres::Connection::Connect` for details of the first two
+    /// parameter types.
     pub fn new<T>(params: T, ssl_mode: SslMode, config: Config) -> StatementCachingManager
             where T: IntoConnectParams {
         StatementCachingManager {
@@ -122,6 +170,8 @@ impl r2d2::PoolManager<Connection, Error> for StatementCachingManager {
     }
 }
 
+/// A trait abstracting over functionality provided by `Connection`s and
+/// `Transaction`s.
 pub trait GenericConnection {
     /// Like `postgres::Connection::prepare`.
     fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>>;
@@ -142,6 +192,8 @@ pub trait GenericConnection {
     fn batch_execute(&self, query: &str) -> postgres::Result<()>;
 }
 
+/// Like a `postgres::Connection`, but maintains a cache of
+/// `postgres::Statement`s.
 pub struct Connection {
     conn: Box<postgres::Connection>,
     stmts: *mut (),
@@ -191,6 +243,7 @@ impl GenericConnection for Connection {
     }
 }
 
+/// Like `postgres::Transaction`.
 pub struct Transaction<'a> {
     conn: &'a Connection,
     trans: postgres::Transaction<'a>
