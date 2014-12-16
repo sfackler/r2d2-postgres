@@ -71,7 +71,7 @@ impl error::Error for Error {
 ///
 ///     for i in range(0, 10i32) {
 ///         let pool = pool.clone();
-///         spawn(proc() {
+///         spawn(move || {
 ///             let conn = pool.get().unwrap();
 ///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
 ///         });

@@ -24,7 +24,7 @@ fn test_basic() {
     let (s2, r2) = comm::channel();
 
     let pool1 = pool.clone();
-    let mut fut1 = Future::spawn(proc() {
+    let mut fut1 = Future::spawn(move || {
         let conn = pool1.get().unwrap();
         s1.send(());
         r2.recv();
@@ -32,7 +32,7 @@ fn test_basic() {
     });
 
     let pool2 = pool.clone();
-    let mut fut2 = Future::spawn(proc() {
+    let mut fut2 = Future::spawn(move || {
         let conn = pool2.get().unwrap();
         s2.send(());
         r1.recv();
