@@ -251,7 +251,7 @@ pub struct Transaction<'a> {
 }
 
 impl<'a> GenericConnection for Transaction<'a> {
-    fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>> {
+    fn prepare<'b>(&'b self, query: &str) -> postgres::Result<Rc<postgres::Statement<'b>>> {
         let query = query.into_string();
         let mut stmts = self.conn.get_cache().borrow_mut();
 
@@ -262,12 +262,12 @@ impl<'a> GenericConnection for Transaction<'a> {
         Ok(Rc::new(try!(self.trans.prepare(query[]))))
     }
 
-    fn prepare_copy_in<'a>(&'a self, table: &str, columns: &[&str])
-                           -> postgres::Result<postgres::CopyInStatement<'a>> {
+    fn prepare_copy_in<'b>(&'b self, table: &str, columns: &[&str])
+                           -> postgres::Result<postgres::CopyInStatement<'b>> {
         self.trans.prepare_copy_in(table, columns)
     }
 
-    fn transaction<'a>(&'a self) -> postgres::Result<Transaction<'a>> {
+    fn transaction<'b>(&'b self) -> postgres::Result<Transaction<'b>> {
         Ok(Transaction {
             conn: self.conn,
             trans: try!(self.trans.transaction())
