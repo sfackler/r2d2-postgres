@@ -3,9 +3,10 @@
 #![warn(missing_docs)]
 extern crate r2d2;
 extern crate postgres;
+extern crate collect;
 
+use collect::LruCache;
 use std::cell::RefCell;
-use std::collections::LruCache;
 use std::default::Default;
 use std::error;
 use std::fmt;
@@ -59,6 +60,7 @@ impl error::Error for Error {
 ///
 /// use std::sync::Arc;
 /// use std::default::Default;
+/// use std::thread::Thread;
 /// use postgres::SslMode;
 /// use r2d2_postgres::PostgresPoolManager;
 ///
@@ -71,10 +73,10 @@ impl error::Error for Error {
 ///
 ///     for i in range(0, 10i32) {
 ///         let pool = pool.clone();
-///         spawn(move || {
+///         Thread::spawn(move || {
 ///             let conn = pool.get().unwrap();
 ///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
-///         });
+///         }).detach();
 ///     }
 /// }
 /// ```
@@ -251,7 +253,7 @@ pub struct Transaction<'a> {
 }
 
 impl<'a> GenericConnection for Transaction<'a> {
-    fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>> {
+    fn prepare<'b>(&'b self, query: &str) -> postgres::Result<Rc<postgres::Statement<'b>>> {
         let query = query.into_string();
         let mut stmts = self.conn.get_cache().borrow_mut();
 
@@ -262,12 +264,12 @@ impl<'a> GenericConnection for Transaction<'a> {
         Ok(Rc::new(try!(self.trans.prepare(query[]))))
     }
 
-    fn prepare_copy_in<'a>(&'a self, table: &str, columns: &[&str])
-                           -> postgres::Result<postgres::CopyInStatement<'a>> {
+    fn prepare_copy_in<'b>(&'b self, table: &str, columns: &[&str])
+                           -> postgres::Result<postgres::CopyInStatement<'b>> {
         self.trans.prepare_copy_in(table, columns)
     }
 
-    fn transaction<'a>(&'a self) -> postgres::Result<Transaction<'a>> {
+    fn transaction<'b>(&'b self) -> postgres::Result<Transaction<'b>> {
         Ok(Transaction {
             conn: self.conn,
             trans: try!(self.trans.transaction())
