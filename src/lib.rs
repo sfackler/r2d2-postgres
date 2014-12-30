@@ -6,6 +6,7 @@ extern crate postgres;
 extern crate collect;
 
 use collect::LruCache;
+use std::borrow::ToOwned;
 use std::cell::RefCell;
 use std::default::Default;
 use std::error;
@@ -202,6 +203,8 @@ pub struct Connection {
     stmts: *mut (),
 }
 
+unsafe impl Send for Connection {}
+
 impl Drop for Connection {
     fn drop(&mut self) {
         let _: Box<RefCell<LruCache<String, Rc<postgres::Statement<'static>>>>> =
@@ -217,7 +220,7 @@ impl Connection {
 
 impl GenericConnection for Connection {
     fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>> {
-        let query = query.into_string();
+        let query = query.to_owned();
         let mut stmts = self.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
@@ -254,7 +257,7 @@ pub struct Transaction<'a> {
 
 impl<'a> GenericConnection for Transaction<'a> {
     fn prepare<'b>(&'b self, query: &str) -> postgres::Result<Rc<postgres::Statement<'b>>> {
-        let query = query.into_string();
+        let query = query.to_owned();
         let mut stmts = self.conn.get_cache().borrow_mut();
 
         if let Some(stmt) = stmts.get(&query) {
