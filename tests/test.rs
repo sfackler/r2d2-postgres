@@ -4,7 +4,7 @@ extern crate r2d2_postgres;
 
 use std::default::Default;
 use std::sync::{Arc, Future};
-use std::comm;
+use std::sync::mpsc;
 
 use postgres::SslMode;
 use r2d2_postgres::PostgresPoolManager;
@@ -20,22 +20,22 @@ fn test_basic() {
     let handler = r2d2::NoopErrorHandler;
     let pool = Arc::new(r2d2::Pool::new(config, manager, handler).unwrap());
 
-    let (s1, r1) = comm::channel();
-    let (s2, r2) = comm::channel();
+    let (s1, r1) = mpsc::channel();
+    let (s2, r2) = mpsc::channel();
 
     let pool1 = pool.clone();
     let mut fut1 = Future::spawn(move || {
         let conn = pool1.get().unwrap();
-        s1.send(());
-        r2.recv();
+        s1.send(()).unwrap();
+        r2.recv().unwrap();
         drop(conn);
     });
 
     let pool2 = pool.clone();
     let mut fut2 = Future::spawn(move || {
         let conn = pool2.get().unwrap();
-        s2.send(());
-        r1.recv();
+        s2.send(()).unwrap();
+        r1.recv().unwrap();
         drop(conn);
     });
 

@@ -17,7 +17,7 @@ use postgres::{IntoConnectParams, SslMode};
 use postgres::types::ToSql;
 
 /// A unified enum of errors returned by postgres::Connection
-#[deriving(Clone)]
+#[derive(Clone)]
 pub enum Error {
     /// A postgres::ConnectError
     Connect(postgres::ConnectError),
@@ -119,7 +119,7 @@ impl r2d2::PoolManager<postgres::Connection, Error> for PostgresPoolManager {
 }
 
 /// Configuration options for the `CachingStatementManager`.
-#[deriving(Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct Config {
     /// The number of `postgres::Statement`s that will be internally cached.
     ///
