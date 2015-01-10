@@ -1,6 +1,7 @@
 //! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://sfackler.github.io/doc")]
 #![warn(missing_docs)]
+#![allow(unstable)]
 extern crate r2d2;
 extern crate postgres;
 extern crate collect;
@@ -10,6 +11,7 @@ use std::borrow::ToOwned;
 use std::cell::RefCell;
 use std::default::Default;
 use std::error;
+use std::error::Error as _StdError;
 use std::fmt;
 use std::mem;
 use std::rc::Rc;
@@ -17,7 +19,7 @@ use postgres::{IntoConnectParams, SslMode};
 use postgres::types::ToSql;
 
 /// A unified enum of errors returned by postgres::Connection
-#[derive(Clone)]
+#[derive(Clone, Show)]
 pub enum Error {
     /// A postgres::ConnectError
     Connect(postgres::ConnectError),
@@ -25,12 +27,9 @@ pub enum Error {
     Other(postgres::Error),
 }
 
-impl fmt::Show for Error {
+impl fmt::String for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Connect(ref e) => write!(fmt, "{}", e),
-            Error::Other(ref e) => write!(fmt, "{}", e),
-        }
+        write!(fmt, "{}", self.description())
     }
 }
 
@@ -55,6 +54,7 @@ impl error::Error for Error {
 /// ## Example
 ///
 /// ```rust,no_run
+/// #![allow(unstable)]
 /// extern crate r2d2;
 /// extern crate r2d2_postgres;
 /// extern crate postgres;
@@ -72,12 +72,12 @@ impl error::Error for Error {
 ///     let error_handler = r2d2::LoggingErrorHandler;
 ///     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
 ///
-///     for i in range(0, 10i32) {
+///     for i in 0..10i32 {
 ///         let pool = pool.clone();
 ///         Thread::spawn(move || {
 ///             let conn = pool.get().unwrap();
 ///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
-///         }).detach();
+///         });
 ///     }
 /// }
 /// ```
@@ -124,7 +124,7 @@ pub struct Config {
     /// The number of `postgres::Statement`s that will be internally cached.
     ///
     /// Defaults to 10
-    pub statement_pool_size: uint,
+    pub statement_pool_size: u32,
 }
 
 impl Default for Config {
@@ -157,10 +157,10 @@ impl StatementCachingManager {
 
 impl r2d2::PoolManager<Connection, Error> for StatementCachingManager {
     fn connect(&self) -> Result<Connection, Error> {
-        let cache = box RefCell::new(LruCache::<String, postgres::Statement<'static>>::new(
-                self.config.statement_pool_size));
+        let cache = Box::new(RefCell::new(LruCache::<String, postgres::Statement<'static>>::new(
+                self.config.statement_pool_size as usize)));
         Ok(Connection {
-            conn: box try!(self.manager.connect()),
+            conn: Box::new(try!(self.manager.connect())),
             stmts: unsafe { mem::transmute(cache) },
         })
     }
@@ -181,7 +181,7 @@ pub trait GenericConnection {
     fn prepare<'a>(&'a self, query: &str) -> postgres::Result<Rc<postgres::Statement<'a>>>;
 
     /// Like `postgres::Connection::execute`.
-    fn execute(&self, query: &str, params: &[&ToSql]) -> postgres::Result<uint> {
+    fn execute(&self, query: &str, params: &[&ToSql]) -> postgres::Result<usize> {
         self.prepare(query).and_then(|s| s.execute(params))
     }
 
@@ -227,7 +227,7 @@ impl GenericConnection for Connection {
             return Ok(stmt.clone());
         }
 
-        let stmt = Rc::new(try!(self.conn.prepare(query[])));
+        let stmt = Rc::new(try!(self.conn.prepare(&*query)));
         stmts.insert(query, stmt.clone());
         Ok(stmt)
     }
@@ -264,7 +264,7 @@ impl<'a> GenericConnection for Transaction<'a> {
             return Ok(stmt.clone());
         }
 
-        Ok(Rc::new(try!(self.trans.prepare(query[]))))
+        Ok(Rc::new(try!(self.trans.prepare(&*query))))
     }
 
     fn prepare_copy_in<'b>(&'b self, table: &str, columns: &[&str])
