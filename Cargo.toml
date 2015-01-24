@@ -18,6 +18,5 @@ name = "test"
 path = "tests/test.rs"
 
 [dependencies]
-r2d2 = "0.2"
-postgres = "0.4"
-collect = "~0.0"
+r2d2 = "0.3"
+postgres = "0.5"
