@@ -17,7 +17,7 @@ fn test_basic() {
         pool_size: 2,
         ..Default::default()
     };
-    let handler = r2d2::NoopErrorHandler;
+    let handler = Box::new(r2d2::NoopErrorHandler);
     let pool = Arc::new(r2d2::Pool::new(config, manager, handler).unwrap());
 
     let (s1, r1) = mpsc::channel();
@@ -53,7 +53,7 @@ fn test_is_valid() {
         test_on_check_out: true,
         ..Default::default()
     };
-    let handler = r2d2::NoopErrorHandler;
+    let handler = Box::new(r2d2::NoopErrorHandler);
     let pool = r2d2::Pool::new(config, manager, handler).unwrap();
 
     pool.get().unwrap();

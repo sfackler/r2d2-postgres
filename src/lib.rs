@@ -61,7 +61,7 @@ impl error::Error for Error {
 ///     let config = Default::default();
 ///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
 ///                                                  SslMode::None);
-///     let error_handler = r2d2::LoggingErrorHandler;
+///     let error_handler = Box::new(r2d2::LoggingErrorHandler);
 ///     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
 ///
 ///     for i in 0..10i32 {
