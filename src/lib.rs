@@ -1,7 +1,7 @@
 //! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://sfackler.github.io/doc")]
+#![feature(core)]
 #![warn(missing_docs)]
-#![allow(unstable)]
 extern crate r2d2;
 extern crate postgres;
 
