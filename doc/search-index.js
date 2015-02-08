@@ -1,0 +1,3 @@
+var searchIndex = {};
+searchIndex['r2d2_postgres'] = {"items":[[0,"","r2d2_postgres","Postgres support for the `r2d2` connection pool."],[3,"PostgresConnectionManager","","An `r2d2::ConnectionManager` for `postgres::Connection`s."],[4,"Error","","A unified enum of errors returned by postgres::Connection"],[13,"Connect","","A postgres::ConnectError",0],[13,"Other","","An postgres::Error",0],[11,"fmt","","",0],[11,"clone","","",0],[11,"fmt","","",0],[11,"description","","",0],[11,"cause","","",0],[11,"fmt","","",1],[11,"new","","Creates a new `PostgresConnectionManager`.",1],[6,"Connection","",""],[6,"Error","",""],[11,"connect","","",1],[11,"is_valid","","",1],[11,"has_broken","","",1]],"paths":[[4,"Error"],[3,"PostgresConnectionManager"]]};
+initSearch(searchIndex);
