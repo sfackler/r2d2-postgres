@@ -2,4 +2,10 @@ language: rust
 addons:
   postgresql: 9.3
 script:
-  - cargo test
+- cargo test
+- cargo doc --no-deps
+after_success:
+- test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./.travis/update_docs.sh
+env:
+  global:
+    secure: r3ugr11ER3l892nwRNDgpf3PMzZ+hucTGuhGHdatUiMGJ6us9E4inhG+dqvV8UoctMFjaO1tYxVHlwpgxo17Spnc6lopH+MrRHP7H42eEkUZbMEAKiHss/M1w6KocVEKsJdTtaNfN8V7MWAjCDAIL4txTbffBGnIfBhPGWVh09M=
