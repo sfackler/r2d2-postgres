@@ -3,8 +3,9 @@ extern crate postgres;
 extern crate r2d2;
 extern crate r2d2_postgres;
 
-use std::sync::{Arc, Future};
+use std::sync::Arc;
 use std::sync::mpsc;
+use std::thread::Thread;
 
 use postgres::SslMode;
 use r2d2_postgres::PostgresConnectionManager;
@@ -20,7 +21,7 @@ fn test_basic() {
     let (s2, r2) = mpsc::channel();
 
     let pool1 = pool.clone();
-    let mut fut1 = Future::spawn(move || {
+    let t1 = Thread::scoped(move || {
         let conn = pool1.get().unwrap();
         s1.send(()).unwrap();
         r2.recv().unwrap();
@@ -28,15 +29,15 @@ fn test_basic() {
     });
 
     let pool2 = pool.clone();
-    let mut fut2 = Future::spawn(move || {
+    let t2 = Thread::scoped(move || {
         let conn = pool2.get().unwrap();
         s2.send(()).unwrap();
         r1.recv().unwrap();
         drop(conn);
     });
 
-    fut1.get();
-    fut2.get();
+    t1.join().ok().unwrap();
+    t2.join().ok().unwrap();
 
     pool.get().unwrap();
 }
