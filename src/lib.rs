@@ -1,6 +1,5 @@
 //! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc")]
-#![feature(core)]
 #![warn(missing_docs)]
 extern crate r2d2;
 extern crate postgres;
@@ -53,7 +52,7 @@ impl error::Error for Error {
 ///
 /// use std::sync::Arc;
 /// use std::default::Default;
-/// use std::thread::Thread;
+/// use std::thread;
 /// use postgres::SslMode;
 /// use r2d2_postgres::PostgresConnectionManager;
 ///
@@ -66,7 +65,7 @@ impl error::Error for Error {
 ///
 ///     for i in 0..10i32 {
 ///         let pool = pool.clone();
-///         Thread::spawn(move || {
+///         thread::spawn(move || {
 ///             let conn = pool.get().unwrap();
 ///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
 ///         });
