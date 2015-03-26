@@ -15,6 +15,27 @@
     "use strict";
     var resizeTimeout, interval;
 
+    // This mapping table should match the discriminants of
+    // `rustdoc::html::item_type::ItemType` type in Rust.
+    var itemTypes = ["mod",
+                     "externcrate",
+                     "import",
+                     "struct",
+                     "enum",
+                     "fn",
+                     "type",
+                     "static",
+                     "trait",
+                     "impl",
+                     "tymethod",
+                     "method",
+                     "structfield",
+                     "variant",
+                     "macro",
+                     "primitive",
+                     "associatedtype",
+                     "constant"];
+
     $('.js-only').removeClass('js-only');
 
     function getQueryStringParams() {
@@ -32,23 +53,6 @@
     function browserSupportsHistoryApi() {
         return window.history && typeof window.history.pushState === "function";
     }
-
-    function resizeShortBlocks() {
-        if (resizeTimeout) {
-            clearTimeout(resizeTimeout);
-        }
-        resizeTimeout = setTimeout(function() {
-            var contentWidth = $('.content').width();
-            $('.docblock.short').width(function() {
-                return contentWidth - 40 - $(this).prev().width();
-            }).addClass('nowrap');
-            $('.summary-column').width(function() {
-                return contentWidth - 40 - $(this).prev().width();
-            })
-        }, 150);
-    }
-    resizeShortBlocks();
-    $(window).on('resize', resizeShortBlocks);
 
     function highlightSourceLines(ev) {
         var i, from, to, match = window.location.hash.match(/^#?(\d+)(?:-(\d+))?$/);
@@ -205,6 +209,33 @@
                         break;
                     }
                 }
+            // searching by type
+            } else if (val.search("->") > -1) {
+                var trimmer = function (s) { return s.trim(); };
+                var parts = val.split("->").map(trimmer);
+                var input = parts[0];
+                // sort inputs so that order does not matter
+                var inputs = input.split(",").map(trimmer).sort();
+                var output = parts[1];
+
+                for (var i = 0; i < nSearchWords; ++i) {
+                    var type = searchIndex[i].type;
+                    if (!type) {
+                        continue;
+                    }
+
+                    // sort index inputs so that order does not matter
+                    var typeInputs = type.inputs.map(function (input) {
+                        return input.name;
+                    }).sort();
+
+                    // allow searching for void (no output) functions as well
+                    var typeOutput = type.output ? type.output.name : "";
+                    if (inputs.toString() === typeInputs.toString() &&
+                        output == typeOutput) {
+                        results.push({id: i, index: -1, dontValidate: true});
+                    }
+                }
             } else {
                 // gather matching search results up to a certain maximum
                 val = val.replace(/\_/g, "");
@@ -324,6 +355,11 @@
                     name = result.item.name.toLowerCase(),
                     path = result.item.path.toLowerCase(),
                     parent = result.item.parent;
+
+                // this validation does not make sense when searching by types
+                if (result.dontValidate) {
+                    continue;
+                }
 
                 var valid = validateResult(name, path, split, parent);
                 if (!valid) {
@@ -552,27 +588,6 @@
             showResults(results);
         }
 
-        // This mapping table should match the discriminants of
-        // `rustdoc::html::item_type::ItemType` type in Rust.
-        var itemTypes = ["mod",
-                         "externcrate",
-                         "import",
-                         "struct",
-                         "enum",
-                         "fn",
-                         "type",
-                         "static",
-                         "trait",
-                         "impl",
-                         "tymethod",
-                         "method",
-                         "structfield",
-                         "variant",
-                         "macro",
-                         "primitive",
-                         "associatedtype",
-                         "constant"];
-
         function itemTypeFromName(typename) {
             for (var i = 0; i < itemTypes.length; ++i) {
                 if (itemTypes[i] === typename) return i;
@@ -590,7 +605,8 @@
                 //              (String) name,
                 //              (String) full path or empty string for previous path,
                 //              (String) description,
-                //              (optional Number) the parent path index to `paths`]
+                //              (Number | null) the parent path index to `paths`]
+                //              (Object | null) the type of the function (if any)
                 var items = rawSearchIndex[crate].items;
                 // an array of [(Number) item type,
                 //              (String) name]
@@ -615,7 +631,7 @@
                     var rawRow = items[i];
                     var row = {crate: crate, ty: rawRow[0], name: rawRow[1],
                                path: rawRow[2] || lastPath, desc: rawRow[3],
-                               parent: paths[rawRow[4]]};
+                               parent: paths[rawRow[4]], type: rawRow[5]};
                     searchIndex.push(row);
                     if (typeof row.name === "string") {
                         var word = row.name.toLowerCase();
@@ -707,6 +723,50 @@
     }
 
     window.initSearch = initSearch;
+
+    // delayed sidebar rendering.
+    function initSidebarItems(items) {
+        var sidebar = $('.sidebar');
+        var current = window.sidebarCurrent;
+
+        function block(shortty, longty) {
+            var filtered = items[shortty];
+            if (!filtered) return;
+
+            var div = $('<div>').attr('class', 'block ' + shortty);
+            div.append($('<h2>').text(longty));
+
+            for (var i = 0; i < filtered.length; ++i) {
+                var item = filtered[i];
+                var name = item[0];
+                var desc = item[1]; // can be null
+
+                var klass = shortty;
+                if (name === current.name && shortty == current.ty) {
+                    klass += ' current';
+                }
+                var path;
+                if (shortty === 'mod') {
+                    path = name + '/index.html';
+                } else {
+                    path = shortty + '.' + name + '.html';
+                }
+                div.append($('<a>', {'href': current.relpath + path,
+                                     'title': desc,
+                                     'class': klass}).text(name));
+            }
+            sidebar.append(div);
+        }
+
+        block("mod", "Modules");
+        block("struct", "Structs");
+        block("enum", "Enums");
+        block("trait", "Traits");
+        block("fn", "Functions");
+        block("macro", "Macros");
+    }
+
+    window.initSidebarItems = initSidebarItems;
 
     window.register_implementors = function(imp) {
         var list = $('#implementors-list');
