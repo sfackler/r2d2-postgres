@@ -11,7 +11,7 @@ use r2d2_postgres::PostgresConnectionManager;
 
 #[test]
 fn test_basic() {
-    let manager = PostgresConnectionManager::new("postgres://postgres@localhost", SslMode::None);
+    let manager = PostgresConnectionManager::new("postgres://postgres@localhost", SslMode::None).unwrap();
     let config = r2d2::Config::builder().pool_size(2).build();
     let handler = Box::new(r2d2::NoopErrorHandler);
     let pool = Arc::new(r2d2::Pool::new(config, manager, handler).unwrap());
@@ -43,7 +43,7 @@ fn test_basic() {
 
 #[test]
 fn test_is_valid() {
-    let manager = PostgresConnectionManager::new("postgres://postgres@localhost", SslMode::None);
+    let manager = PostgresConnectionManager::new("postgres://postgres@localhost", SslMode::None).unwrap();
     let config = r2d2::Config::builder().pool_size(1).test_on_check_out(true).build();
     let handler = Box::new(r2d2::NoopErrorHandler);
     let pool = r2d2::Pool::new(config, manager, handler).unwrap();

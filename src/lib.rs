@@ -10,7 +10,7 @@ use std::fmt;
 use postgres::{IntoConnectParams, SslMode};
 
 /// A unified enum of errors returned by postgres::Connection
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Error {
     /// A postgres::ConnectError
     Connect(postgres::ConnectError),
@@ -59,7 +59,7 @@ impl error::Error for Error {
 /// fn main() {
 ///     let config = Default::default();
 ///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
-///                                                  SslMode::None);
+///                                                  SslMode::None).unwrap();
 ///     let error_handler = Box::new(r2d2::LoggingErrorHandler);
 ///     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
 ///
@@ -73,7 +73,7 @@ impl error::Error for Error {
 /// }
 /// ```
 pub struct PostgresConnectionManager {
-    params: Result<postgres::ConnectParams, postgres::ConnectError>,
+    params: postgres::ConnectParams,
     ssl_mode: SslMode,
 }
 
@@ -89,11 +89,12 @@ impl PostgresConnectionManager {
     ///
     /// See `postgres::Connection::connect` for a description of the parameter
     /// types.
-    pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode) -> PostgresConnectionManager {
-        PostgresConnectionManager {
-            params: params.into_connect_params(),
+    pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
+            -> Result<PostgresConnectionManager, postgres::ConnectError> {
+        Ok(PostgresConnectionManager {
+            params: try!(params.into_connect_params()),
             ssl_mode: ssl_mode,
-        }
+        })
     }
 }
 
@@ -102,12 +103,7 @@ impl r2d2::ConnectionManager for PostgresConnectionManager {
     type Error = Error;
 
     fn connect(&self) -> Result<postgres::Connection, Error> {
-        match self.params {
-            Ok(ref p) => {
-                postgres::Connection::connect(p.clone(), &self.ssl_mode).map_err(Error::Connect)
-            }
-            Err(ref e) => Err(Error::Connect(e.clone()))
-        }
+        postgres::Connection::connect(self.params.clone(), &self.ssl_mode).map_err(Error::Connect)
     }
 
     fn is_valid(&self, conn: &mut postgres::Connection) -> Result<(), Error> {
