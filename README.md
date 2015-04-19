@@ -17,12 +17,12 @@ extern crate postgres;
 use std::sync::Arc;
 use std::default::Default;
 use postgres::SslMode;
-use r2d2_postgres::PostgresPoolManager;
+use r2d2_postgres::PostgresConnectionManager;
 
 fn main() {
     let config = Default::default();
-    let manager = PostgresPoolManager::new("postgres://postgres@localhost",
-                                           SslMode::None);
+    let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
+                                                 SslMode::None).unwrap();
     let error_handler = r2d2::LoggingErrorHandler;
     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
 
