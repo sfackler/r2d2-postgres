@@ -150,12 +150,6 @@
 <span id="108">108</span>
 <span id="109">109</span>
 <span id="110">110</span>
-<span id="111">111</span>
-<span id="112">112</span>
-<span id="113">113</span>
-<span id="114">114</span>
-<span id="115">115</span>
-<span id="116">116</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Postgres support for the `r2d2` connection pool.</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_root_url</span><span class='op'>=</span><span class='string'>&quot;https://sfackler.github.io/r2d2-postgres/doc&quot;</span>)]</span>
@@ -231,16 +225,10 @@
 <span class='doccomment'>///     }</span>
 <span class='doccomment'>/// }</span>
 <span class='doccomment'>/// ```</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PostgresConnectionManager</span> {
     <span class='ident'>params</span>: <span class='ident'>postgres</span>::<span class='ident'>ConnectParams</span>,
     <span class='ident'>ssl_mode</span>: <span class='ident'>SslMode</span>,
-}
-
-<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>PostgresConnectionManager</span> {
-    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;PostgresConnectionManager {{ parameters: {:?}, ssl_mode: {:?} }}&quot;</span>,
-               <span class='self'>self</span>.<span class='ident'>params</span>, <span class='self'>self</span>.<span class='ident'>ssl_mode</span>)
-    }
 }
 
 <span class='kw'>impl</span> <span class='ident'>PostgresConnectionManager</span> {
