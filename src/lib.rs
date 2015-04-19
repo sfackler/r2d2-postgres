@@ -72,16 +72,10 @@ impl error::Error for Error {
 ///     }
 /// }
 /// ```
+#[derive(Debug)]
 pub struct PostgresConnectionManager {
     params: postgres::ConnectParams,
     ssl_mode: SslMode,
-}
-
-impl fmt::Debug for PostgresConnectionManager {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "PostgresConnectionManager {{ parameters: {:?}, ssl_mode: {:?} }}",
-               self.params, self.ssl_mode)
-    }
 }
 
 impl PostgresConnectionManager {
