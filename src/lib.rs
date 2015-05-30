@@ -12,10 +12,10 @@ use postgres::{IntoConnectParams, SslMode};
 /// A unified enum of errors returned by postgres::Connection
 #[derive(Debug)]
 pub enum Error {
-    /// A postgres::ConnectError
-    Connect(postgres::ConnectError),
-    /// An postgres::Error
-    Other(postgres::Error),
+    /// A postgres::error::ConnectError
+    Connect(postgres::error::ConnectError),
+    /// An postgres::error::Error
+    Other(postgres::error::Error),
 }
 
 impl fmt::Display for Error {
@@ -84,7 +84,7 @@ impl PostgresConnectionManager {
     /// See `postgres::Connection::connect` for a description of the parameter
     /// types.
     pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
-            -> Result<PostgresConnectionManager, postgres::ConnectError> {
+            -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
         Ok(PostgresConnectionManager {
             params: try!(params.into_connect_params()),
             ssl_mode: ssl_mode,
