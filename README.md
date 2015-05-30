@@ -15,6 +15,7 @@ extern crate r2d2_postgres;
 extern crate postgres;
 
 use std::sync::Arc;
+use std::thread;
 use std::default::Default;
 use postgres::SslMode;
 use r2d2_postgres::PostgresConnectionManager;
@@ -23,12 +24,12 @@ fn main() {
     let config = Default::default();
     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
                                                  SslMode::None).unwrap();
-    let error_handler = r2d2::LoggingErrorHandler;
+    let error_handler = Box::new(r2d2::LoggingErrorHandler);
     let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
 
-    for i in range(0, 10i32) {
+    for i in 0..10i32 {
         let pool = pool.clone();
-        spawn(proc() {
+        thread::spawn(move || {
             let conn = pool.get().unwrap();
             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
         });
