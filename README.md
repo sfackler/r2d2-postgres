@@ -5,7 +5,7 @@ r2d2-postgres
 
 [rust-postgres](https://github.com/sfackler/rust-postgres) support library for the [r2d2](https://github.com/sfackler/r2d2) connection pool.
 
-Documentation is available at https://sfackler.github.io/r2d2-postgres/doc/r2d2_postgres
+Documentation is available at https://sfackler.github.io/r2d2-postgres/doc/v0.9.1/r2d2_postgres
 
 # Example
 
