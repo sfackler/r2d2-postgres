@@ -21,11 +21,10 @@ use postgres::SslMode;
 use r2d2_postgres::PostgresConnectionManager;
 
 fn main() {
-    let config = Default::default();
+    let config = r2d2::Config::default();
     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
                                                  SslMode::None).unwrap();
-    let error_handler = Box::new(r2d2::LoggingErrorHandler);
-    let pool = Arc::new(r2d2::Pool::new(config, manager, error_handler).unwrap());
+    let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
 
     for i in 0..10i32 {
         let pool = pool.clone();
