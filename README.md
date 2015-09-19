@@ -14,7 +14,6 @@ extern crate r2d2;
 extern crate r2d2_postgres;
 extern crate postgres;
 
-use std::sync::Arc;
 use std::thread;
 use std::default::Default;
 use postgres::SslMode;
@@ -24,7 +23,7 @@ fn main() {
     let config = r2d2::Config::default();
     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
                                                  SslMode::None).unwrap();
-    let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
+    let pool = r2d2::Pool::new(config, manager).unwrap();
 
     for i in 0..10i32 {
         let pool = pool.clone();
