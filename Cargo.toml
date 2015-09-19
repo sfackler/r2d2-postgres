@@ -19,4 +19,4 @@ path = "tests/test.rs"
 
 [dependencies]
 r2d2 = "0.6"
-postgres = "0.9"
+postgres = "0.10"

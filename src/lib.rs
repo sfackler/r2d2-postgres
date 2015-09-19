@@ -84,8 +84,13 @@ impl PostgresConnectionManager {
     /// types.
     pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
             -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
+        let params = match params.into_connect_params() {
+            Ok(params) => params,
+            Err(err) => return Err(postgres::error::ConnectError::BadConnectParams(err)),
+        };
+
         Ok(PostgresConnectionManager {
-            params: try!(params.into_connect_params()),
+            params: params,
             ssl_mode: ssl_mode,
         })
     }
