@@ -1,5 +1,5 @@
 //! Postgres support for the `r2d2` connection pool.
-#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.9.2")]
+#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.9.3")]
 #![warn(missing_docs)]
 extern crate r2d2;
 extern crate postgres;
@@ -84,8 +84,13 @@ impl PostgresConnectionManager {
     /// types.
     pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
             -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
+        let params = match params.into_connect_params() {
+            Ok(params) => params,
+            Err(err) => return Err(postgres::error::ConnectError::BadConnectParams(err)),
+        };
+
         Ok(PostgresConnectionManager {
-            params: try!(params.into_connect_params()),
+            params: params,
             ssl_mode: ssl_mode,
         })
     }
