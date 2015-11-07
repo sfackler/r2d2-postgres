@@ -50,8 +50,6 @@ impl error::Error for Error {
 /// extern crate r2d2_postgres;
 /// extern crate postgres;
 ///
-/// use std::sync::Arc;
-/// use std::default::Default;
 /// use std::thread;
 /// use postgres::SslMode;
 /// use r2d2_postgres::PostgresConnectionManager;
@@ -60,7 +58,7 @@ impl error::Error for Error {
 ///     let config = r2d2::Config::default();
 ///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
 ///                                                  SslMode::None).unwrap();
-///     let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
+///     let pool = r2d2::Pool::new(config, manager).unwrap();
 ///
 ///     for i in 0..10i32 {
 ///         let pool = pool.clone();
