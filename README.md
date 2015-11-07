@@ -15,7 +15,6 @@ extern crate r2d2_postgres;
 extern crate postgres;
 
 use std::thread;
-use std::default::Default;
 use postgres::SslMode;
 use r2d2_postgres::PostgresConnectionManager;
 
