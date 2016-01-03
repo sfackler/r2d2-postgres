@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error","A unified enum of errors returned by postgres::Connection"],["SslMode","Like `postgres::SslMode` except that it owns its `NegotiateSsl` instance."]],"struct":[["PostgresConnectionManager","An `r2d2::ManageConnection` for `postgres::Connection`s."]]});
