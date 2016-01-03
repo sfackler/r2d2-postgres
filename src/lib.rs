@@ -7,7 +7,19 @@ extern crate postgres;
 use std::error;
 use std::error::Error as _StdError;
 use std::fmt;
-use postgres::{IntoConnectParams, SslMode};
+use postgres::{IntoConnectParams};
+use postgres::io::NegotiateSsl;
+
+/// Like `postgres::SslMode` except that it owns its `NegotiateSsl` instance.
+#[derive(Debug)]
+pub enum SslMode {
+    /// Like `postgres::SslMode::None`.
+    None,
+    /// Like `postgres::SslMode::Prefer`.
+    Prefer(Box<NegotiateSsl + Sync + Send>),
+    /// Like `postgres::SslMode::Require`.
+    Require(Box<NegotiateSsl + Sync + Send>),
+}
 
 /// A unified enum of errors returned by postgres::Connection
 #[derive(Debug)]
@@ -45,14 +57,12 @@ impl error::Error for Error {
 /// ## Example
 ///
 /// ```rust,no_run
-/// #![allow(unstable)]
 /// extern crate r2d2;
 /// extern crate r2d2_postgres;
 /// extern crate postgres;
 ///
 /// use std::thread;
-/// use postgres::SslMode;
-/// use r2d2_postgres::PostgresConnectionManager;
+/// use r2d2_postgres::{SslMode, PostgresConnectionManager};
 ///
 /// fn main() {
 ///     let config = r2d2::Config::default();
@@ -84,7 +94,7 @@ impl PostgresConnectionManager {
             -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
         let params = match params.into_connect_params() {
             Ok(params) => params,
-            Err(err) => return Err(postgres::error::ConnectError::BadConnectParams(err)),
+            Err(err) => return Err(postgres::error::ConnectError::ConnectParams(err)),
         };
 
         Ok(PostgresConnectionManager {
@@ -99,7 +109,12 @@ impl r2d2::ManageConnection for PostgresConnectionManager {
     type Error = Error;
 
     fn connect(&self) -> Result<postgres::Connection, Error> {
-        postgres::Connection::connect(self.params.clone(), &self.ssl_mode).map_err(Error::Connect)
+        let mode = match self.ssl_mode {
+            SslMode::None => postgres::SslMode::None,
+            SslMode::Prefer(ref n) => postgres::SslMode::Prefer(&**n),
+            SslMode::Require(ref n) => postgres::SslMode::Require(&**n),
+        };
+        postgres::Connection::connect(self.params.clone(), mode).map_err(Error::Connect)
     }
 
     fn is_valid(&self, conn: &mut postgres::Connection) -> Result<(), Error> {

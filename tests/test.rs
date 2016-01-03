@@ -6,8 +6,7 @@ use std::sync::Arc;
 use std::sync::mpsc;
 use std::thread;
 
-use postgres::SslMode;
-use r2d2_postgres::PostgresConnectionManager;
+use r2d2_postgres::{SslMode, PostgresConnectionManager};
 
 #[test]
 fn test_basic() {
