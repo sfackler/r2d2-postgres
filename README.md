@@ -15,8 +15,7 @@ extern crate r2d2_postgres;
 extern crate postgres;
 
 use std::thread;
-use postgres::SslMode;
-use r2d2_postgres::PostgresConnectionManager;
+use r2d2_postgres::{SslMode, PostgresConnectionManager};
 
 fn main() {
     let config = r2d2::Config::default();
