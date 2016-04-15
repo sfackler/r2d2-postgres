@@ -3,7 +3,7 @@ r2d2-postgres
 
 [![Build Status](https://travis-ci.org/sfackler/r2d2-postgres.svg?branch=master)](https://travis-ci.org/sfackler/r2d2-postgres)
 
-[Documentation](https://sfackler.github.io/r2d2-postgres/doc/v0.10.0/r2d2_postgres)
+[Documentation](https://sfackler.github.io/r2d2-postgres/doc/v0.10.1/r2d2_postgres)
 
 [rust-postgres](https://github.com/sfackler/rust-postgres) support library for the [r2d2](https://github.com/sfackler/r2d2) connection pool.
 
