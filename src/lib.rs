@@ -1,5 +1,5 @@
 //! Postgres support for the `r2d2` connection pool.
-#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.10.0")]
+#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.10.1")]
 #![warn(missing_docs)]
 extern crate r2d2;
 extern crate postgres;
@@ -7,7 +7,7 @@ extern crate postgres;
 use std::error;
 use std::error::Error as _StdError;
 use std::fmt;
-use postgres::{IntoConnectParams};
+use postgres::IntoConnectParams;
 use postgres::io::NegotiateSsl;
 
 /// Like `postgres::SslMode` except that it owns its `NegotiateSsl` instance.
@@ -90,8 +90,10 @@ impl PostgresConnectionManager {
     ///
     /// See `postgres::Connection::connect` for a description of the parameter
     /// types.
-    pub fn new<T: IntoConnectParams>(params: T, ssl_mode: SslMode)
-            -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
+    pub fn new<T: IntoConnectParams>
+        (params: T,
+         ssl_mode: SslMode)
+         -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
         let params = match params.into_connect_params() {
             Ok(params) => params,
             Err(err) => return Err(postgres::error::ConnectError::ConnectParams(err)),
