@@ -90,10 +90,11 @@ impl PostgresConnectionManager {
     ///
     /// See `postgres::Connection::connect` for a description of the parameter
     /// types.
-    pub fn new<T: IntoConnectParams>
-        (params: T,
-         ssl_mode: SslMode)
-         -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
+    pub fn new<T>(params: T,
+                  ssl_mode: SslMode)
+                  -> Result<PostgresConnectionManager, postgres::error::ConnectError>
+        where T: IntoConnectParams
+    {
         let params = match params.into_connect_params() {
             Ok(params) => params,
             Err(err) => return Err(postgres::error::ConnectError::ConnectParams(err)),
