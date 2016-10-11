@@ -15,12 +15,12 @@ extern crate r2d2_postgres;
 extern crate postgres;
 
 use std::thread;
-use r2d2_postgres::{SslMode, PostgresConnectionManager};
+use r2d2_postgres::{TlsMode, PostgresConnectionManager};
 
 fn main() {
     let config = r2d2::Config::default();
     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
-                                                 SslMode::None).unwrap();
+                                                 TlsMode::None).unwrap();
     let pool = r2d2::Pool::new(config, manager).unwrap();
 
     for i in 0..10i32 {
