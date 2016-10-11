@@ -1,9 +1,9 @@
 language: rust
 rust:
 - nightly
-- beta
-- 1.8.0
+- 1.10.0
 addons:
-  postgresql: 9.3
+  postgresql: 9.4
+cache: cargo
 script:
 - cargo test
