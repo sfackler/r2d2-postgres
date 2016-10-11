@@ -1,8 +1,8 @@
 //! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.10.1")]
 #![warn(missing_docs)]
-extern crate r2d2;
-extern crate postgres;
+pub extern crate r2d2;
+pub extern crate postgres;
 
 use std::error;
 use std::error::Error as _StdError;
