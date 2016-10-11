@@ -1,24 +1,24 @@
 //! Postgres support for the `r2d2` connection pool.
-#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.10.1")]
+#![doc(html_root_url="https://sfackler.github.io/r2d2-postgres/doc/v0.11.0")]
 #![warn(missing_docs)]
-extern crate r2d2;
-extern crate postgres;
+pub extern crate r2d2;
+pub extern crate postgres;
 
 use std::error;
 use std::error::Error as _StdError;
 use std::fmt;
-use postgres::IntoConnectParams;
-use postgres::io::NegotiateSsl;
+use postgres::params::{ConnectParams, IntoConnectParams};
+use postgres::tls::TlsHandshake;
 
-/// Like `postgres::SslMode` except that it owns its `NegotiateSsl` instance.
+/// Like `postgres::TlsMode` except that it owns its `TlsHandshake` instance.
 #[derive(Debug)]
-pub enum SslMode {
-    /// Like `postgres::SslMode::None`.
+pub enum TlsMode {
+    /// Like `postgres::TlsMode::None`.
     None,
-    /// Like `postgres::SslMode::Prefer`.
-    Prefer(Box<NegotiateSsl + Sync + Send>),
-    /// Like `postgres::SslMode::Require`.
-    Require(Box<NegotiateSsl + Sync + Send>),
+    /// Like `postgres::TlsMode::Prefer`.
+    Prefer(Box<TlsHandshake + Sync + Send>),
+    /// Like `postgres::TlsMode::Require`.
+    Require(Box<TlsHandshake + Sync + Send>),
 }
 
 /// A unified enum of errors returned by postgres::Connection
@@ -62,12 +62,12 @@ impl error::Error for Error {
 /// extern crate postgres;
 ///
 /// use std::thread;
-/// use r2d2_postgres::{SslMode, PostgresConnectionManager};
+/// use r2d2_postgres::{TlsMode, PostgresConnectionManager};
 ///
 /// fn main() {
 ///     let config = r2d2::Config::default();
 ///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
-///                                                  SslMode::None).unwrap();
+///                                                  TlsMode::None).unwrap();
 ///     let pool = r2d2::Pool::new(config, manager).unwrap();
 ///
 ///     for i in 0..10i32 {
@@ -81,8 +81,8 @@ impl error::Error for Error {
 /// ```
 #[derive(Debug)]
 pub struct PostgresConnectionManager {
-    params: postgres::ConnectParams,
-    ssl_mode: SslMode,
+    params: ConnectParams,
+    ssl_mode: TlsMode,
 }
 
 impl PostgresConnectionManager {
@@ -90,10 +90,11 @@ impl PostgresConnectionManager {
     ///
     /// See `postgres::Connection::connect` for a description of the parameter
     /// types.
-    pub fn new<T: IntoConnectParams>
-        (params: T,
-         ssl_mode: SslMode)
-         -> Result<PostgresConnectionManager, postgres::error::ConnectError> {
+    pub fn new<T>(params: T,
+                  ssl_mode: TlsMode)
+                  -> Result<PostgresConnectionManager, postgres::error::ConnectError>
+        where T: IntoConnectParams
+    {
         let params = match params.into_connect_params() {
             Ok(params) => params,
             Err(err) => return Err(postgres::error::ConnectError::ConnectParams(err)),
@@ -112,9 +113,9 @@ impl r2d2::ManageConnection for PostgresConnectionManager {
 
     fn connect(&self) -> Result<postgres::Connection, Error> {
         let mode = match self.ssl_mode {
-            SslMode::None => postgres::SslMode::None,
-            SslMode::Prefer(ref n) => postgres::SslMode::Prefer(&**n),
-            SslMode::Require(ref n) => postgres::SslMode::Require(&**n),
+            TlsMode::None => postgres::TlsMode::None,
+            TlsMode::Prefer(ref n) => postgres::TlsMode::Prefer(&**n),
+            TlsMode::Require(ref n) => postgres::TlsMode::Require(&**n),
         };
         postgres::Connection::connect(self.params.clone(), mode).map_err(Error::Connect)
     }
