@@ -1,7 +1,7 @@
 r2d2-postgres
 =============
 
-[![Build Status](https://travis-ci.org/sfackler/r2d2-postgres.svg?branch=master)](https://travis-ci.org/sfackler/r2d2-postgres)
+[![CircleCI](https://circleci.com/gh/sfackler/r2d2-postgres.svg?style=shield)](https://circleci.com/gh/sfackler/r2d2-postgres)
 
 [Documentation](https://docs.rs/r2d2_postgres)
 
