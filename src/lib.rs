@@ -3,10 +3,9 @@
 #![warn(missing_docs)]
 pub extern crate r2d2;
 pub extern crate postgres;
+extern crate postgres_shared;
 
-use std::error;
-use std::error::Error as _StdError;
-use std::fmt;
+use postgres::{Connection, Error, Result};
 use postgres::params::{ConnectParams, IntoConnectParams};
 use postgres::tls::TlsHandshake;
 
@@ -19,37 +18,6 @@ pub enum TlsMode {
     Prefer(Box<TlsHandshake + Sync + Send>),
     /// Like `postgres::TlsMode::Require`.
     Require(Box<TlsHandshake + Sync + Send>),
-}
-
-/// A unified enum of errors returned by postgres::Connection
-#[derive(Debug)]
-pub enum Error {
-    /// A postgres::error::ConnectError
-    Connect(postgres::error::ConnectError),
-    /// An postgres::error::Error
-    Other(postgres::error::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}: {}", self.description(), self.cause().unwrap())
-    }
-}
-
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Connect(_) => "Error opening a connection",
-            Error::Other(_) => "Error communicating with server",
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Connect(ref err) => Some(err as &error::Error),
-            Error::Other(ref err) => Some(err as &error::Error),
-        }
-    }
 }
 
 /// An `r2d2::ManageConnection` for `postgres::Connection`s.
@@ -92,13 +60,11 @@ impl PostgresConnectionManager {
     /// types.
     pub fn new<T>(params: T,
                   ssl_mode: TlsMode)
-                  -> Result<PostgresConnectionManager, postgres::error::ConnectError>
+                  -> Result<PostgresConnectionManager>
         where T: IntoConnectParams
     {
-        let params = match params.into_connect_params() {
-            Ok(params) => params,
-            Err(err) => return Err(postgres::error::ConnectError::ConnectParams(err)),
-        };
+        // fixme we shouldn't be using this private constructor :(
+        let params = params.into_connect_params().map_err(postgres_shared::error::connect)?;
 
         Ok(PostgresConnectionManager {
             params: params,
@@ -108,23 +74,23 @@ impl PostgresConnectionManager {
 }
 
 impl r2d2::ManageConnection for PostgresConnectionManager {
-    type Connection = postgres::Connection;
+    type Connection = Connection;
     type Error = Error;
 
-    fn connect(&self) -> Result<postgres::Connection, Error> {
+    fn connect(&self) -> Result<postgres::Connection> {
         let mode = match self.ssl_mode {
             TlsMode::None => postgres::TlsMode::None,
             TlsMode::Prefer(ref n) => postgres::TlsMode::Prefer(&**n),
             TlsMode::Require(ref n) => postgres::TlsMode::Require(&**n),
         };
-        postgres::Connection::connect(self.params.clone(), mode).map_err(Error::Connect)
+        postgres::Connection::connect(self.params.clone(), mode)
     }
 
-    fn is_valid(&self, conn: &mut postgres::Connection) -> Result<(), Error> {
-        conn.batch_execute("").map_err(Error::Other)
+    fn is_valid(&self, conn: &mut Connection) -> Result<()> {
+        conn.batch_execute("")
     }
 
-    fn has_broken(&self, conn: &mut postgres::Connection) -> bool {
+    fn has_broken(&self, conn: &mut Connection) -> bool {
         conn.is_desynchronized()
     }
 }

@@ -19,4 +19,5 @@ path = "tests/test.rs"
 
 [dependencies]
 r2d2 = "0.7"
-postgres = "0.14"
+postgres = "0.15"
+postgres-shared = "0.4"
