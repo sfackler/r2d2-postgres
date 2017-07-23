@@ -1,9 +1,0 @@
-language: rust
-rust:
-- nightly
-- 1.15.0
-addons:
-  postgresql: 9.4
-cache: cargo
-script:
-- cargo test
