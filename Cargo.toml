@@ -1,11 +1,11 @@
 [package]
 name = "r2d2_postgres"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 license = "MIT"
 description = "Postgres support for the r2d2 connection pool"
 repository = "https://github.com/sfackler/r2d2-postgres"
-documentation = "https://docs.rs/r2d2_postgres/0.12.0/r2d2_postgres"
+documentation = "https://docs.rs/r2d2_postgres/0.13.0/r2d2_postgres"
 keywords = ["postgres", "sql", "pool", "database"]
 
 [lib]
