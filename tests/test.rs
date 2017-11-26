@@ -2,7 +2,6 @@ extern crate postgres;
 extern crate r2d2;
 extern crate r2d2_postgres;
 
-use std::sync::Arc;
 use std::sync::mpsc;
 use std::thread;
 
@@ -13,8 +12,7 @@ fn test_basic() {
     let manager =
         PostgresConnectionManager::new("postgres://postgres:password@localhost", TlsMode::None)
             .unwrap();
-    let config = r2d2::Config::builder().pool_size(2).build();
-    let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
+    let pool = r2d2::Pool::builder().max_size(2).build(manager).unwrap();
 
     let (s1, r1) = mpsc::channel();
     let (s2, r2) = mpsc::channel();
@@ -46,11 +44,10 @@ fn test_is_valid() {
     let manager =
         PostgresConnectionManager::new("postgres://postgres:password@localhost", TlsMode::None)
             .unwrap();
-    let config = r2d2::Config::builder()
-        .pool_size(1)
-        .test_on_check_out(true)
-        .build();
-    let pool = r2d2::Pool::new(config, manager).unwrap();
+    let pool = r2d2::Pool::builder()
+        .max_size(1)
+        .build(manager)
+        .unwrap();
 
     pool.get().unwrap();
 }

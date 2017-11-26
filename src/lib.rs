@@ -27,16 +27,14 @@ pub enum TlsMode {
 /// ```rust,no_run
 /// extern crate r2d2;
 /// extern crate r2d2_postgres;
-/// extern crate postgres;
 ///
 /// use std::thread;
 /// use r2d2_postgres::{TlsMode, PostgresConnectionManager};
 ///
 /// fn main() {
-///     let config = r2d2::Config::default();
 ///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
 ///                                                  TlsMode::None).unwrap();
-///     let pool = r2d2::Pool::new(config, manager).unwrap();
+///     let pool = r2d2::Pool::new(manager).unwrap();
 ///
 ///     for i in 0..10i32 {
 ///         let pool = pool.clone();
@@ -63,7 +61,7 @@ impl PostgresConnectionManager {
                   -> Result<PostgresConnectionManager>
         where T: IntoConnectParams
     {
-        // fixme we shouldn't be using this private constructor :(
+        // FIXME we shouldn't be using this private constructor :(
         let params = params.into_connect_params().map_err(postgres_shared::error::connect)?;
 
         Ok(PostgresConnectionManager {
