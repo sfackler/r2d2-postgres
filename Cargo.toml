@@ -20,3 +20,13 @@ path = "tests/test.rs"
 r2d2 = "0.8"
 postgres = "0.15"
 postgres-shared = "0.4"
+
+[features]
+"with-bit-vec" = [ "postgres/with-bit-vec" ]
+"with-chrono" = [ "postgres/with-chrono" ]
+"with-eui48" = [ "postgres/with-eui48" ]
+"with-geo" = [ "postgres/with-geo" ]
+"with-serde_json" = [ "postgres/with-serde_json" ]
+"with-uuid" = [ "postgres/with-uuid" ]
+"with-openssl" = [ "postgres/with-openssl" ]
+"with-native-tls" = [ "postgres/with-native-tls" ]
