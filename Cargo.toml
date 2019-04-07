@@ -2,6 +2,7 @@
 name = "r2d2_postgres"
 version = "0.14.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
+edition = "2018"
 license = "MIT"
 description = "Postgres support for the r2d2 connection pool"
 repository = "https://github.com/sfackler/r2d2-postgres"

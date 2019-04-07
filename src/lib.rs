@@ -1,9 +1,8 @@
 //! Postgres support for the `r2d2` connection pool.
 #![doc(html_root_url="https://docs.rs/r2d2_postgres/0.14")]
 #![warn(missing_docs)]
-pub extern crate r2d2;
-pub extern crate postgres;
-extern crate postgres_shared;
+pub use r2d2;
+pub use postgres;
 
 use postgres::{Connection, Error, Result};
 use postgres::params::{ConnectParams, IntoConnectParams};
@@ -15,9 +14,9 @@ pub enum TlsMode {
     /// Like `postgres::TlsMode::None`.
     None,
     /// Like `postgres::TlsMode::Prefer`.
-    Prefer(Box<TlsHandshake + Sync + Send>),
+    Prefer(Box<dyn TlsHandshake + Sync + Send>),
     /// Like `postgres::TlsMode::Require`.
-    Require(Box<TlsHandshake + Sync + Send>),
+    Require(Box<dyn TlsHandshake + Sync + Send>),
 }
 
 /// An `r2d2::ManageConnection` for `postgres::Connection`s.
