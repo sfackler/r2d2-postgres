@@ -1,93 +1,80 @@
 //! Postgres support for the `r2d2` connection pool.
-#![doc(html_root_url="https://docs.rs/r2d2_postgres/0.14")]
+#![doc(html_root_url = "https://docs.rs/r2d2_postgres/0.15.0-rc.1")]
 #![warn(missing_docs)]
-pub use r2d2;
 pub use postgres;
+pub use r2d2;
 
-use postgres::{Connection, Error, Result};
-use postgres::params::{ConnectParams, IntoConnectParams};
-use postgres::tls::TlsHandshake;
+use postgres::tls::{MakeTlsConnect, TlsConnect};
+use postgres::{Client, Config, Error};
+use r2d2::ManageConnection;
+use tokio_postgres::Socket;
 
-/// Like `postgres::TlsMode` except that it owns its `TlsHandshake` instance.
-#[derive(Debug)]
-pub enum TlsMode {
-    /// Like `postgres::TlsMode::None`.
-    None,
-    /// Like `postgres::TlsMode::Prefer`.
-    Prefer(Box<dyn TlsHandshake + Sync + Send>),
-    /// Like `postgres::TlsMode::Require`.
-    Require(Box<dyn TlsHandshake + Sync + Send>),
-}
-
-/// An `r2d2::ManageConnection` for `postgres::Connection`s.
+/// An `r2d2::ManageConnection` for `postgres::Client`s.
 ///
 /// ## Example
 ///
-/// ```rust,no_run
-/// extern crate r2d2;
-/// extern crate r2d2_postgres;
-///
+/// ```no_run
 /// use std::thread;
-/// use r2d2_postgres::{TlsMode, PostgresConnectionManager};
+/// use postgres::{NoTls, Client};
+/// use r2d2_postgres::PostgresConnectionManager;
 ///
 /// fn main() {
-///     let manager = PostgresConnectionManager::new("postgres://postgres@localhost",
-///                                                  TlsMode::None).unwrap();
+///     let manager = PostgresConnectionManager::new(
+///         "host=localhost user=postgres".parse().unwrap(),
+///         NoTls,
+///     );
 ///     let pool = r2d2::Pool::new(manager).unwrap();
 ///
 ///     for i in 0..10i32 {
 ///         let pool = pool.clone();
 ///         thread::spawn(move || {
-///             let conn = pool.get().unwrap();
-///             conn.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
+///             let mut client = pool.get().unwrap();
+///             client.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
 ///         });
 ///     }
 /// }
 /// ```
 #[derive(Debug)]
-pub struct PostgresConnectionManager {
-    params: ConnectParams,
-    ssl_mode: TlsMode,
+pub struct PostgresConnectionManager<T> {
+    config: Config,
+    tls_connector: T,
 }
 
-impl PostgresConnectionManager {
+impl<T> PostgresConnectionManager<T>
+where
+    T: MakeTlsConnect<Socket> + Clone + 'static + Sync + Send,
+    T::TlsConnect: Send,
+    T::Stream: Send,
+    <T::TlsConnect as TlsConnect<Socket>>::Future: Send,
+{
     /// Creates a new `PostgresConnectionManager`.
-    ///
-    /// See `postgres::Connection::connect` for a description of the parameter
-    /// types.
-    pub fn new<T>(params: T,
-                  ssl_mode: TlsMode)
-                  -> Result<PostgresConnectionManager>
-        where T: IntoConnectParams
-    {
-        // FIXME we shouldn't be using this private constructor :(
-        let params = params.into_connect_params().map_err(postgres_shared::error::connect)?;
-
-        Ok(PostgresConnectionManager {
-            params: params,
-            ssl_mode: ssl_mode,
-        })
+    pub fn new(config: Config, tls_connector: T) -> PostgresConnectionManager<T> {
+        PostgresConnectionManager {
+            config,
+            tls_connector,
+        }
     }
 }
 
-impl r2d2::ManageConnection for PostgresConnectionManager {
-    type Connection = Connection;
+impl<T> ManageConnection for PostgresConnectionManager<T>
+where
+    T: MakeTlsConnect<Socket> + Clone + 'static + Sync + Send,
+    T::TlsConnect: Send,
+    T::Stream: Send,
+    <T::TlsConnect as TlsConnect<Socket>>::Future: Send,
+{
+    type Connection = Client;
     type Error = Error;
 
-    fn connect(&self) -> Result<postgres::Connection> {
-        let mode = match self.ssl_mode {
-            TlsMode::None => postgres::TlsMode::None,
-            TlsMode::Prefer(ref n) => postgres::TlsMode::Prefer(&**n),
-            TlsMode::Require(ref n) => postgres::TlsMode::Require(&**n),
-        };
-        postgres::Connection::connect(self.params.clone(), mode)
+    fn connect(&self) -> Result<Client, Error> {
+        self.config.connect(self.tls_connector.clone())
     }
 
-    fn is_valid(&self, conn: &mut Connection) -> Result<()> {
-        conn.batch_execute("")
+    fn is_valid(&self, client: &mut Client) -> Result<(), Error> {
+        client.simple_query("").map(|_| ())
     }
 
-    fn has_broken(&self, conn: &mut Connection) -> bool {
-        conn.is_desynchronized()
+    fn has_broken(&self, client: &mut Client) -> bool {
+        client.is_closed()
     }
 }

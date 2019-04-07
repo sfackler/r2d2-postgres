@@ -1,6 +1,6 @@
 [package]
 name = "r2d2_postgres"
-version = "0.14.0"
+version = "0.15.0-rc.1"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -8,16 +8,7 @@ description = "Postgres support for the r2d2 connection pool"
 repository = "https://github.com/sfackler/r2d2-postgres"
 keywords = ["postgres", "sql", "pool", "database"]
 
-[lib]
-name = "r2d2_postgres"
-path = "src/lib.rs"
-test = false
-
-[[test]]
-name = "test"
-path = "tests/test.rs"
-
 [dependencies]
 r2d2 = "0.8"
-postgres = "0.15"
-postgres-shared = "0.4"
+postgres = "0.16.0-rc.1"
+tokio-postgres = "0.4.0-rc.2"
