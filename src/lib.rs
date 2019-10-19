@@ -5,9 +5,8 @@ pub use postgres;
 pub use r2d2;
 
 use postgres::tls::{MakeTlsConnect, TlsConnect};
-use postgres::{Client, Config, Error};
+use postgres::{Client, Config, Error, Socket};
 use r2d2::ManageConnection;
-use tokio_postgres::Socket;
 
 /// An `r2d2::ManageConnection` for `postgres::Client`s.
 ///
