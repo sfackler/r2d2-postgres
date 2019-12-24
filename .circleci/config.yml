@@ -9,7 +9,7 @@ save_registry: &SAVE_REGISTRY
       - /usr/local/cargo/registry/index
 
 deps_key: &DEPS_KEY
-  key: deps-1.39.0-{{ checksum "Cargo.lock" }}-2
+  key: deps-1.40.0-{{ checksum "Cargo.lock" }}-2
 
 restore_deps: &RESTORE_DEPS
   restore_cache:
@@ -26,7 +26,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: rust:1.39.0
+      - image: rust:1.40.0
       - image: postgres:12
         environment:
           POSTGRES_PASSWORD: password
