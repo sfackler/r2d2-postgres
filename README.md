@@ -11,8 +11,7 @@ r2d2-postgres
 
 ```rust
 use std::thread;
-use postgres::{NoTls, Client};
-use r2d2_postgres::PostgresConnectionManager;
+use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
 
 fn main() {
     let manager = PostgresConnectionManager::new(
