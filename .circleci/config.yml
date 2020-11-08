@@ -26,7 +26,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: rust:1.40.0
+      - image: rust:1.42.0
       - image: postgres:12
         environment:
           POSTGRES_PASSWORD: password
