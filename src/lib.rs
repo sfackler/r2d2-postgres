@@ -1,5 +1,4 @@
 //! Postgres support for the `r2d2` connection pool.
-#![doc(html_root_url = "https://docs.rs/r2d2_postgres/0.16")]
 #![warn(missing_docs)]
 pub use postgres;
 pub use r2d2;
