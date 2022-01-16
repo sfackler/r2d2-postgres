@@ -22,12 +22,16 @@ use r2d2::ManageConnection;
 ///     );
 ///     let pool = r2d2::Pool::new(manager).unwrap();
 ///
+///     let mut handles = vec![];
 ///     for i in 0..10i32 {
 ///         let pool = pool.clone();
-///         thread::spawn(move || {
+///         handles.push(thread::spawn(move || {
 ///             let mut client = pool.get().unwrap();
 ///             client.execute("INSERT INTO foo (bar) VALUES ($1)", &[&i]).unwrap();
-///         });
+///         }));
+///     }
+///     for h in handles {
+///         h.join().unwrap();
 ///     }
 /// }
 /// ```
