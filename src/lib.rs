@@ -68,7 +68,7 @@ where
     }
 
     fn is_valid(&self, client: &mut Client) -> Result<(), Error> {
-        client.simple_query("SELECT 1;").map(|_| ())
+        client.simple_query("").map(|_| ())
     }
 
     fn has_broken(&self, client: &mut Client) -> bool {
